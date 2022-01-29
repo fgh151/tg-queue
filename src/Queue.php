@@ -2,28 +2,20 @@
 
 namespace fgh151\tg;
 
-
-use Aws\Sqs\SqsClient;
-
-
 class Queue
 {
 
+    /** @var QueueClientInterface | AwsClient */
     private $ymq;
 
-    private function __construct()
+    private function __construct($client = AwsClient::class, $clientParams = null)
     {
-        $this->ymq = new SqsClient([
-            'version' => 'latest',
-            'region' => 'ru-central1',
-            'endpoint' => 'https://message-queue.api.cloud.yandex.net',
-        ]);
+        $this->ymq = new $client($clientParams);
     }
 
     public static function push($channel, $message)
     {
         $q = new self();
-
         $q->sendMessage($channel, $message);
     }
 
@@ -42,6 +34,4 @@ class Queue
             'MessageBody' => $message,
         ]);
     }
-
-
 }
