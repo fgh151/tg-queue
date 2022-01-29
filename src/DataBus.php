@@ -13,23 +13,13 @@ abstract class DataBus
     protected function __construct($client = AwsClient::class, $clientParams = null)
     {
         $this->ymq = new $client($clientParams);
-        $this->init();
-    }
-
-    /**
-     * Инициализация дополнительных данных после конструктора
-     * @return void
-     */
-    public function init()
-    {
-
     }
 
     abstract public function run();
     abstract public function onMessage(string $queueUrl, $fn): DataBus;
     abstract public function fetchUrls($fn, $params): DataBus;
 
-    protected static function getInstance(): DataBus
+    public static function getInstance(): DataBus
     {
         $cls = static::class;
         if (!isset(self::$instances[$cls])) {

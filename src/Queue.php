@@ -2,9 +2,15 @@
 
 namespace fgh151\tg;
 
+use RuntimeException;
+
 class Queue extends DataBus
 {
-
+    /**
+     * @param string $channel канал отправки, например идентификатор чата или получателя
+     * @param string $message Сообщение для отправки. Можно отправлять текст или сериализованные массив или объект
+     * @return void
+     */
     public static function push($channel, $message)
     {
         $q = new self();
@@ -36,5 +42,20 @@ class Queue extends DataBus
                 'MessageBody' => $message,
             ])
         ];
+    }
+
+    public function run()
+    {
+        throw new RuntimeException('Метод предназначен для прослушивания очереди');
+    }
+
+    public function onMessage(string $queueUrl, $fn): DataBus
+    {
+        throw new RuntimeException('Метод предназначен для прослушивания очереди');
+    }
+
+    public function fetchUrls($fn, $params): DataBus
+    {
+        throw new RuntimeException('Метод предназначен для прослушивания очереди');
     }
 }

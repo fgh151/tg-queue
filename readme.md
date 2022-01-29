@@ -1,3 +1,9 @@
+### Установка
+
+```shell
+composer require fgh151/tg-queue
+```
+
 ### Отправка сообщения в очередь
 
 ```injectablephp
@@ -13,7 +19,7 @@ $result = fgh151\tg\Queue::push($channel, $payload)
 
 ```injectablephp
 
-$l = fgh151\tg\QueueListener::listen();
+$l = fgh151\tg\QueueListener::getInstance();
 $l->onMessage($url, $fn);
 
 ```
@@ -23,6 +29,16 @@ $l->onMessage($url, $fn);
 ```injectablephp
 class Daemon extends CI_Controller {
 
+    /**
+    * @return string[] Массив адресов сообщений
+     * Полученный при вызове функции $result = fgh151\tg\Queue::push($channel, $payload)
+     * В массиве $result есть ключ 'url'
+     */
+    public static function getUrls(): array
+    {
+        return ['url1', 'url2'];
+    }
+    
     /**
     * @param $params Сообщение, полученное из очереди
     * @return bool
@@ -37,8 +53,10 @@ class Daemon extends CI_Controller {
     public function queue()
     {
         /** @see https://www.php.net/manual/ru/language.types.callable.php */
-        (fgh151\tg\QueueListener::listen())
-            ->onMessage($url, ['Daemon', 'handler']);
+        (fgh151\tg\QueueListener::getInstance())
+            ->fetchUrls(['Daemon', 'getUrls'])
+            ->onMessage($url, ['Daemon', 'handler'])
+            ->run();
     }
 }
 ```
