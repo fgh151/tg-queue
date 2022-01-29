@@ -2,16 +2,8 @@
 
 namespace fgh151\tg;
 
-class Queue
+class Queue extends DataBus
 {
-
-    /** @var QueueClientInterface | AwsClient */
-    private $ymq;
-
-    private function __construct($client = AwsClient::class, $clientParams = null)
-    {
-        $this->ymq = new $client($clientParams);
-    }
 
     public static function push($channel, $message)
     {
@@ -19,6 +11,14 @@ class Queue
         $q->sendMessage($channel, $message);
     }
 
+    /**
+     *
+     * @param $channel
+     * @param $message
+     * @return array ['url' => 'queueUrl', 'result' => $r]
+     * Детальную информацию о результате можно посмотреть
+     * @see https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sqs-2012-11-05.html#sendmessage
+     */
     public function sendMessage($channel, $message)
     {
         $result = $this->ymq->listQueues(['MaxResults' => 100]);
@@ -29,9 +29,12 @@ class Queue
         }
         $queueUrl = $result["QueueUrl"];
 
-        return $this->ymq->sendMessage([
-            'QueueUrl' => $queueUrl,
-            'MessageBody' => $message,
-        ]);
+        return [
+            'url' => $queueUrl,
+            'result' => $this->ymq->sendMessage([
+                'QueueUrl' => $queueUrl,
+                'MessageBody' => $message,
+            ])
+        ];
     }
 }
