@@ -13,6 +13,7 @@ abstract class DataBus
     protected function __construct($client = AwsClient::class, $clientParams = null)
     {
         $this->ymq = new $client($clientParams);
+        $this->init();
     }
 
     abstract public function run();
@@ -42,4 +43,6 @@ abstract class DataBus
     protected function __clone()
     {
     }
+
+    public function init(){}
 }

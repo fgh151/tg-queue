@@ -6,6 +6,7 @@ use Amp\Loop;
 use Amp\Parallel\Worker\DefaultPool;
 use Amp\Parallel\Worker\Pool;
 use function Amp\call;
+use function Amp\Promise\all;
 
 class QueueListener extends DataBus
 {
@@ -28,9 +29,32 @@ class QueueListener extends DataBus
     /** @var Buffer[] $buffer */
     private $buffer = [];
 
+    private $timers = [];
+
     public static function listen(): DataBus
     {
         return self::getInstance();
+    }
+
+    public function init()
+    {
+        parent::init();
+        pcntl_signal(SIGTERM, [&$this, 'halt']);
+        pcntl_signal(SIGHUP,  [&$this, 'halt']);
+        pcntl_signal(SIGUSR1, [&$this, 'halt']);
+    }
+
+    /**
+     * Обработка системных вызовов на перезапуск и останов демона
+     * @return void
+     */
+    private function halt()
+    {
+        foreach ($this->timers as $timer) {
+            Loop::unreference($timer);
+        }
+
+        $this->pool->shutdown();
     }
 
     /**
@@ -46,7 +70,7 @@ class QueueListener extends DataBus
         Loop::run(static function () use ($self, $interval) {
 
             // заполняем массив каналов, выставляем флаг нужно ли обновлять корутины
-            Loop::repeat($interval, static function () use ($self, &$refreshCoroutines) {
+            $self->timers[] = Loop::repeat($interval, static function () use ($self, &$refreshCoroutines) {
                 $buf = call_user_func($self->fetchFn['fn'], $self->fetchFn['params']);
                 if ($buf !== $self->channels) {
                     $self->channels = $buf;
@@ -55,7 +79,7 @@ class QueueListener extends DataBus
             });
 
             // Получаем сообщения и отправляем в буфер
-            Loop::repeat($interval / 10, static function () use ($self) {
+            $self->timers[] = Loop::repeat($interval / 10, static function () use ($self) {
 
                 foreach ($self->channels as $url) {
 
@@ -76,7 +100,7 @@ class QueueListener extends DataBus
             });
 
             // читаем и обрабатываем буфер
-            Loop::repeat($interval / 10, static function () use ($self) {
+            $self->timers[] = Loop::repeat($interval / 10, static function () use ($self) {
                 foreach ($self->channels as $url) {
                     $processMsg = $self->buffer[$url]->pop();
 
