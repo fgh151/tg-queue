@@ -6,7 +6,6 @@ use Amp\Loop;
 use Amp\Parallel\Worker\DefaultPool;
 use Amp\Parallel\Worker\Pool;
 use function Amp\call;
-use function Amp\Promise\all;
 
 class QueueListener extends DataBus
 {
@@ -21,7 +20,7 @@ class QueueListener extends DataBus
     /** @var Pool | DefaultPool */
     private $pool;
 
-    private $maxPerSecond = 60;
+    private $maxPerSecond = 3;
     private $maxPerMinute = 60;
 
     private $channels = [];
@@ -118,7 +117,7 @@ class QueueListener extends DataBus
     /**
      * @param int $maxPerSecond
      */
-    public function setMaxPerSecond(int $maxPerSecond = 60): QueueListener
+    public function setMaxPerSecond(int $maxPerSecond = 3): QueueListener
     {
         $this->maxPerSecond = $maxPerSecond;
         return $this;
