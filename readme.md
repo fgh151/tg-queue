@@ -64,6 +64,20 @@ class Daemon extends CI_Controller {
 }
 ```
 
+##### Изменение конфигурации подключения
+
+```injectablephp
+
+options = [];
+
+$client = new \fgh151\tg\AwsClient(options);
+
+(fgh151\tg\QueueListener::getInstance())
+->setClient($client);
+```
+
+Массив $options конфигурирует подключение. Параметры массива можно посмотреть [тут](https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/guide_configuration.html)
+
 ##### Запуск воркера
 
 Запуск воркера имеет смысл делегировать на supervisor или systemd

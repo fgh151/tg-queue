@@ -29,6 +29,11 @@ abstract class DataBus
         return self::$instances[$cls];
     }
 
+    public function setClient($client)
+    {
+        $this->ymq = $client;
+    }
+
     public function __wakeup()
     {
         throw new Exception("Cannot unserialize a singleton.");
