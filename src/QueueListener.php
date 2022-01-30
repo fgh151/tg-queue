@@ -21,26 +21,48 @@ class QueueListener extends DataBus
     /** @var Pool | DefaultPool */
     private $pool;
 
+    private $maxPerSecond = 60;
+    private $maxPerMinute = 60;
+
+    private $channels = [];
+
+    /** @var Buffer[] $buffer */
+    private $buffer = [];
+
     public static function listen(): DataBus
     {
         return self::getInstance();
     }
 
-    public function run($interval = 200)
+    /**
+     * @param $interval int интервал времени в млсек, через который проверять наличие новых каналов
+     * @return void
+     */
+    public function run($interval = 1000)
     {
 
         $self = $this;
         $self->pool = new DefaultPool();
-        $coroutines = [];
 
-        Loop::run(static function () use ($self, $interval, $coroutines) {
+        Loop::run(static function () use ($self, $interval) {
 
+            // заполняем массив каналов, выставляем флаг нужно ли обновлять корутины
+            Loop::repeat($interval, static function () use ($self, &$refreshCoroutines) {
+                $buf = call_user_func($self->fetchFn['fn'], $self->fetchFn['params']);
+                if ($buf !== $self->channels) {
+                    $self->channels = $buf;
+                    $refreshCoroutines = true;
+                }
+            });
 
-            $timer = Loop::repeat($interval, static function () use ($self, $coroutines) {
-                $urls = call_user_func($self->fetchFn['fn'], $self->fetchFn['params']);
+            // Получаем сообщения и отправляем в буфер
+            Loop::repeat($interval / 10, static function () use ($self) {
 
+                foreach ($self->channels as $url) {
 
-                foreach ($urls as $url) {
+                    if (false === isset($self->buffer[$url])) {
+                        $self->buffer[$url] = new Buffer($self->maxPerSecond, $self->maxPerMinute);
+                    }
 
                     $result = $self->ymq->receiveMessage([
                         'QueueUrl' => $url,
@@ -49,29 +71,27 @@ class QueueListener extends DataBus
 
                     foreach ($result["Messages"] as $msg) {
 
-//TODO: Тут обработка сообщений с вычислениями когда выпонять
-//                        $coroutines[] = call(function () use ($self, $url, $msg) {
-//                            if (yield $self->pool->enqueue($self->onMessageFn[$url])) {
-//                                $self->ymq->deleteMessage([
-//                                    'QueueUrl' => $url,
-//                                    'ReceiptHandle' => $msg['ReceiptHandle'],
-//                                ]);
-//                            }
-//                        });
-
+                        $self->buffer[$url]->addMessage($msg['Body']);
                     }
                 }
-
             });
 
-            // TODO:  этот код надо запихнуть в https://www.php.net/manual/ru/function.pcntl-signal.php
-//            Loop::unreference($timer);
-//
-//
-//            $results = yield all($coroutines);
-//
-//            return yield $self->pool->shutdown();
+            // читаем и обрабатываем буфер
+            Loop::repeat($interval / 10, static function () use ($self) {
+                foreach ($self->channels as $url) {
+                    $processMsg = $self->buffer[$url]->pop();
 
+                    call(function () use ($self, $url, $processMsg) {
+                        $msg = json_decode($processMsg);
+                        if (yield $self->pool->enqueue($self->onMessageFn[$url])) {
+                            $self->ymq->deleteMessage([
+                                'QueueUrl' => $url,
+                                'ReceiptHandle' => $msg['ReceiptHandle'],
+                            ]);
+                        }
+                    });
+                }
+            });
         });
     }
 
@@ -92,6 +112,24 @@ class QueueListener extends DataBus
     public function onMessage(string $queueUrl, $fn): DataBus
     {
         $this->onMessageFn[$queueUrl] = $fn;
+        return $this;
+    }
+
+    /**
+     * @param int $maxPerSecond
+     */
+    public function setMaxPerSecond(int $maxPerSecond = 60): QueueListener
+    {
+        $this->maxPerSecond = $maxPerSecond;
+        return $this;
+    }
+
+    /**
+     * @param int $maxPerMinute
+     */
+    public function setMaxPerMinute(int $maxPerMinute = 60): QueueListener
+    {
+        $this->maxPerMinute = $maxPerMinute;
         return $this;
     }
 }

@@ -30,12 +30,13 @@ $l->onMessage($url, $fn);
 class Daemon extends CI_Controller {
 
     /**
-    * @return string[] Массив адресов сообщений
+    * @return string[] Массив адресов каналов
      * Полученный при вызове функции $result = fgh151\tg\Queue::push($channel, $payload)
      * В массиве $result есть ключ 'url'
      */
     public static function getUrls(): array
     {
+        // тк количество каналов будет изменяться не часто, целесообразно отдавать результат из кеша
         return ['url1', 'url2'];
     }
     
@@ -56,7 +57,9 @@ class Daemon extends CI_Controller {
         (fgh151\tg\QueueListener::getInstance())
             ->fetchUrls(['Daemon', 'getUrls'])
             ->onMessage($url, ['Daemon', 'handler'])
-            ->run();
+            ->setMaxPerSecond(60) //Максимальное количество сообщений в секунду. По умолчанию 60, можно не вызывать
+            ->setMaxPerMinute(60) //Максимальное количество сообщений в минуту. По умолчанию 60, можно не вызывать
+            ->run(100); // Интервал времени в млсек, через который проверять наличие новых каналов, можно не указывать, по умолчанию 1000 млс (1 сек)
     }
 }
 ```

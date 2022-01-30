@@ -37,7 +37,9 @@ class Buffer
 
     public function addMessage($message)
     {
-        $this->messages[] = $message;
+        if (false === in_array($message, $this->messages, true)) {
+            $this->messages[] = $message;
+        }
     }
 
     public function pop()
