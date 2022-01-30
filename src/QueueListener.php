@@ -81,11 +81,10 @@ class QueueListener extends DataBus
                     $processMsg = $self->buffer[$url]->pop();
 
                     call(function () use ($self, $url, $processMsg) {
-                        $msg = json_decode($processMsg);
-                        if (yield $self->pool->enqueue($self->onMessageFn[$url])) {
+                        if (yield $self->pool->enqueue($self->onMessageFn[$processMsg])) {
                             $self->ymq->deleteMessage([
                                 'QueueUrl' => $url,
-                                'ReceiptHandle' => $msg['ReceiptHandle'],
+                                'ReceiptHandle' => $processMsg['ReceiptHandle'],
                             ]);
                         }
                     });

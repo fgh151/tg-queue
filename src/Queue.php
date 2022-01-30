@@ -39,7 +39,7 @@ class Queue extends DataBus
             'url' => $queueUrl,
             'result' => $this->ymq->sendMessage([
                 'QueueUrl' => $queueUrl,
-                'MessageBody' => json_encode($message),
+                'MessageBody' => $message,
             ])
         ];
     }
