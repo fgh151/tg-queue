@@ -40,8 +40,13 @@ class QueueListener extends DataBus
     {
         parent::init();
         pcntl_signal(SIGTERM, [&$this, 'halt']);
-        pcntl_signal(SIGHUP,  [&$this, 'halt']);
+        pcntl_signal(SIGHUP, [&$this, 'halt']);
         pcntl_signal(SIGUSR1, [&$this, 'halt']);
+    }
+
+    public function __destruct()
+    {
+        $this->halt();
     }
 
     /**
