@@ -13,7 +13,7 @@ class Queue extends DataBus
      */
     public static function push($channel, $message)
     {
-        $q = new self();
+        $q = self:: getInstance();
         $q->sendMessage($channel, $message);
     }
 
