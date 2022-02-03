@@ -78,6 +78,19 @@ $client = new \fgh151\tg\AwsClient(options);
 
 Массив $options конфигурирует подключение. Параметры массива можно посмотреть [тут](https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/guide_configuration.html)
 
+В данном случае можно не использовать переменные окружения для ключей доступа:
+
+```injectablephp
+$options = [
+    'version'     => 'latest',
+    'region'      => 'us-west-2',
+    'credentials' => [
+        'key'    => 'my-access-key-id',
+        'secret' => 'my-secret-access-key',
+    ],
+];
+```
+
 ##### Запуск воркера
 
 Запуск воркера имеет смысл делегировать на supervisor или systemd
