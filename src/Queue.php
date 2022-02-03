@@ -11,7 +11,7 @@ class Queue extends DataBus
      * @param string $message Сообщение для отправки. Можно отправлять текст или сериализованные массив или объект
      * @return void
      */
-    public static function push($channel, $message)
+    public function push($channel, $message)
     {
         $q = self:: getInstance();
         $q->sendMessage($channel, $message);
