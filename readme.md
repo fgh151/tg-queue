@@ -12,7 +12,7 @@ $channel = 'some_chat_id';
 $payload = json_encode(['some' => 'object', 'or' => 'array']);
 
 
-$result = fgh151\tg\Queue::push($channel, $payload)
+$result = (fgh151\tg\QueueListener::getInstance())->push($channel, $payload)
 ```
 
 ### Обработчик очереди
