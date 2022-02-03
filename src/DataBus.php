@@ -33,6 +33,7 @@ abstract class DataBus
     public function setClient($client)
     {
         $this->ymq = $client;
+        return $this;
     }
 
     public function __wakeup()
