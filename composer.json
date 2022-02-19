@@ -13,13 +13,15 @@
     "require": {
         "php": "7.3",
         "ext-json": "*",
-        "ext-pcntl": "*",
         "aws/aws-sdk-php-resources": "^0.3.0",
         "amphp/parallel": "^1.4"
     }
     ,
     "require-dev": {
         "roave/security-advisories": "dev-latest"
+    },
+    "suggest": {
+        "ext-pcntl": "Позволняет корректно обрабатывать сигнылы sig term, kill и т.д."
     },
     "autoload": {
         "psr-4": {
